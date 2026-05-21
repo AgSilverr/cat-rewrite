@@ -286,6 +286,36 @@ def is_owner(user_id: int) -> bool:
     """
     return user_id == 475737475470589952
 
+async def get_permission_level(user_id: int) -> PermissionLevel:
+    """
+    Returns permission level for command usage. 
+    Owner means they can run anything,
+    Admin means they can run certain things others can't (manual track for example)
+    Default means no special permissions
+    """
+    
+    if is_owner(user_id=user_id):
+        return PermissionLevel.OWNER # No need to do anything else
+
+    permission_level = PermissionLevel.DEFAULT
+
+    bot_guild = bot.get_guild(id=1177151218049618031)
+    if not bot_guild:
+        return permission_level
+    
+    member = bot_guild.get_member(user_id)
+    if not member:
+        return permission_level
+    
+    whitelist_role = discord.utils.get(iterable=bot_guild.roles, id=1195956111099052032)
+    whitelist_plus_role = discord.utils.get(iterable=bot_guild.roles, id=1328207797321601046)
+    if whitelist_role and whitelist_plus_role:
+        if whitelist_plus_role in member.roles:
+            permission_level = PermissionLevel.OWNER
+        elif whitelist_role in member.roles:
+            permission_level = PermissionLevel.ADMIN
+    
+    return permission_level
 
 def get_nth_word(string: str, n: int, delim: str | None = None) -> str | None:
     """

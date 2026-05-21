@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from utils.defs import *
 from utils.embeds import send_data
-from utils.utils import is_owner
+from utils.utils import get_permission_level
 
 
 class MainCommands(commands.Cog):
@@ -42,7 +42,7 @@ class MainCommands(commands.Cog):
     @commands.slash_command()
     @discord.guild_only()
     async def set_tracker(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        if not ctx.author.guild_permissions.administrator and not is_owner(ctx.author.id):
+        if not ctx.author.guild_permissions.administrator and get_permission_level(user_id=ctx.user.id) != PermissionLevel.OWNER:
             await ctx.respond(content="You do not have admin permissions")
             return
 
@@ -61,7 +61,7 @@ class MainCommands(commands.Cog):
     @commands.slash_command()
     @discord.guild_only()
     async def set_global_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        if not ctx.author.guild_permissions.administrator and not is_owner(ctx.author.id):
+        if not ctx.author.guild_permissions.administrator and get_permission_level(user_id=ctx.user.id) != PermissionLevel.OWNER:
             await ctx.respond(content="You do not have admin permissions")
             return
 
@@ -91,7 +91,7 @@ class MainCommands(commands.Cog):
     @commands.slash_command()
     @discord.guild_only()
     async def remove_global_channel(self, ctx: discord.ApplicationContext):
-        if not ctx.author.guild_permissions.administrator and not is_owner(ctx.author.id):
+        if not ctx.author.guild_permissions.administrator and get_permission_level(user_id=ctx.user.id) != PermissionLevel.OWNER:
             await ctx.respond(content="You do not have admin permissions")
             return
 
@@ -125,7 +125,6 @@ class MainCommands(commands.Cog):
         await ctx.respond(content=f"Removed set pings in this server")
 
     @commands.slash_command()
-    @commands.is_owner()
     async def manual_track(
         self, ctx: discord.ApplicationContext,
         ore_name: str,
@@ -139,15 +138,18 @@ class MainCommands(commands.Cog):
         event: str,
         cave_type: str = discord.Option(str, description="", required=False)
     ):
+        if get_permission_level(user_id=ctx.user.id) < PermissionLevel.ADMIN:
+            return await ctx.respond(content="You do not have permission to run this command.")
+
         await send_data(ore_name=ore_name, ore_rarity=base_rarity, cave_type=cave_type, ore_tier=tier,
                         ore_type=ore_type, event=event, world=world, username=username, loadout=loadout,
                         blocks_mined=blocks_mined, manual_tracked=True)
-        await ctx.respond("sent")
+        await ctx.respond(content="Sent")
 
     @commands.slash_command()
     @discord.guild_only()
     async def set_global_message(self, ctx: discord.ApplicationContext, message: str):
-        if not ctx.author.guild_permissions.administrator and not is_owner(ctx.author.id):
+        if not ctx.author.guild_permissions.administrator and get_permission_level(user_id=ctx.user.id) != PermissionLevel.OWNER:
             await ctx.respond(content="You do not have admin permissions")
             return
 
@@ -167,7 +169,7 @@ class MainCommands(commands.Cog):
     @commands.slash_command()
     @discord.guild_only()
     async def remove_global_message(self, ctx: discord.ApplicationContext):
-        if not ctx.author.guild_permissions.administrator and not is_owner(ctx.author.id):
+        if not ctx.author.guild_permissions.administrator and get_permission_level(user_id=ctx.user.id) != PermissionLevel.OWNER:
             await ctx.respond(content="You do not have admin permissions")
             return
 
@@ -179,7 +181,7 @@ class MainCommands(commands.Cog):
     @commands.slash_command()
     @discord.guild_only()
     async def add_to_tracker(self, ctx: discord.ApplicationContext, usernames: str):
-        if not ctx.author.guild_permissions.administrator and not is_owner(ctx.author.id):
+        if not ctx.author.guild_permissions.administrator and get_permission_level(user_id=ctx.user.id) != PermissionLevel.OWNER:
             await ctx.respond(content="You do not have admin permissions")
             return
 
@@ -233,7 +235,7 @@ class MainCommands(commands.Cog):
     @commands.slash_command()
     @discord.guild_only()
     async def remove_from_tracker(self, ctx: discord.ApplicationContext, usernames: str):
-        if not ctx.author.guild_permissions.administrator and not is_owner(ctx.author.id):
+        if not ctx.author.guild_permissions.administrator and get_permission_level(user_id=ctx.user.id) != PermissionLevel.OWNER:
             await ctx.respond(content="You do not have admin permissions")
             return
 

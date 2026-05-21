@@ -124,47 +124,10 @@ TIER_NAME_TO_COLOR_HEX = {
     "Exclusive": 0x26004B
 }
 
-# stax; cave type rarities.
-CAVE_RARITIES = {
-    "Gilded Cave": 5700,
-    "Frozen Cave": 8,
-    "Metallic Cave": 11,
-    "Geode Cave": 12,
-    "Elemental Cave": 17,
-    "Divine Cave": 20,
-    "Prismatic Cave": 27,
-    "Void Cave": 35,
-    "Magmatic Cave": 11,
-    "Radioactive Cave": 11,
-    "Interstellar Cave": 11,
-    "nil Cave": 48,
-    "feebium Cave": 99999,
-    "Unstable Cave": 13,
-    "Galactic Cave": 16,
-    "Enchanted Cave": 22,
-    "Luminous Cave": 34,
-    "Nightfall Cave": 43,
-    "Solar Cave": 7,
-    "Darkmatter": 15,
-    "Marble Cave": 25,
-    "Anti-Cave Cave": 96,
-    "Starry Cave": 9,
-    "Matrix Cave": 15,
-    "Voltaic Cave": 17,
-    "Bichromatic Cave": 21,
-    "Monoprismatic Cave": 29,
-    "Malware Cave": 36,
-    "Soulseek Cave": 11,
-    "Heartstring Cave": 14,
-    "Snowveil Cave": 20,
-    "Freezeflower Cave": 22,
-    "Fractured Cave": 35,
-    "Umbragloom Cave": 8,
-    "Softsnow Cave": 12,
-    "Firework Cave": 20,
-    "Peppermint Cave": 25,
-    "Fireplace Cave": 33,
-}
+class PermissionLevel(enum.IntEnum):
+    DEFAULT = 1,
+    ADMIN = 2,
+    OWNER = 3
 
 class AdjustedPreferences(enum.IntEnum):
     NONE = 0,
