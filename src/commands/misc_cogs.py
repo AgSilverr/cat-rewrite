@@ -168,7 +168,9 @@ class MiscCommands(commands.Cog):
         db_conn.commit()
         await ctx.respond(content=f"Set adjusted preference to \"{preference}\"")
 
-    @commands.slash_command()
+    @commands.slash_command(
+            integration_types={ discord.IntegrationType.user_install, discord.IntegrationType.guild_install } # allow this to be used outside of servers where the bot is
+        )
     async def ore_info(
         self, ctx: discord.ApplicationContext,
         ore_name: str,
