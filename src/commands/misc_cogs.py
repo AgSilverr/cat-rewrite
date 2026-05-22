@@ -217,7 +217,7 @@ class MiscCommands(commands.Cog):
                 tier = "Enigmatic"
                 ion_mult = 30
             else:
-                idk: list[str, int] = get_stuff(ore_name=ore_name, ore_rarity=base_rarity)
+                idk: list[str, int] = get_stuff(ore_name=ore_name.lower(), ore_rarity=base_rarity)
                 if idk:
                     tier = idk[0]
                     ion_mult = idk[1]
