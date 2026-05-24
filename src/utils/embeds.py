@@ -177,7 +177,7 @@ async def send_data(
     if not embed:
         return
     
-    if is_global and not manual_tracked:
+    if is_global:
         cat_global_channel: discord.TextChannel = bot.get_channel(1306083504370618470)
         if cat_global_channel:
                 await cat_global_channel.send(embed=embed)
