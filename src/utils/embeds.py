@@ -180,7 +180,10 @@ async def send_data(
     if is_global:
         cat_global_channel: discord.TextChannel = bot.get_channel(1306083504370618470)
         if cat_global_channel:
-                await cat_global_channel.send(embed=embed)
+            await cat_global_channel.send(embed=embed)
+        wdor_global_channel: discord.TextChannel = bot.get_channel(1508240892933443604)
+        if wdor_global_channel:
+            await wdor_global_channel.send(embed=embed)
 
     base_rarity: int = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type,
                                       loadout=loadout, do_adjusted=False, run_nebulova=True)
