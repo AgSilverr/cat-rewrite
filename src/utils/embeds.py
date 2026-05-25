@@ -143,8 +143,7 @@ async def send_data(
             for user_id, every_track, globals_only in user_pings:
                 if globals_only and not is_global:
                     continue
-                if every_track or (globals_only and is_global):
-                    ping_ids.append(user_id)
+                ping_ids.append(user_id)
             pings = "".join([f"<@{uid}>" for uid in ping_ids])
 
             if is_global:
