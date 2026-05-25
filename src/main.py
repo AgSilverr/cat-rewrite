@@ -160,7 +160,7 @@ def main() -> None:
 
     try:
         create_database()
-        fix_up_database()
+        #fix_up_database()
         setup_commands(bot)
 
         dotenv.load_dotenv()
