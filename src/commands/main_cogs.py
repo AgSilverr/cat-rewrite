@@ -102,16 +102,26 @@ class MainCommands(commands.Cog):
 
     @commands.slash_command()
     @discord.guild_only()
-    async def set_user_ping(self, ctx: discord.ApplicationContext, username: str):
+    async def set_user_ping(
+        self, ctx: discord.ApplicationContext,
+        username: str,
+        every_track = discord.Option(bool, "Ping for every track", required=False, default=True),
+        globals_only = discord.Option(bool, "Ping for globals only", required=False, default=False),
+    ):
+        if globals_only:
+            every_track = False
         # TODO: stax; figure out a better way to do this
         db_cursor.execute(
             """
-            INSERT INTO PingsPerUsername (guild_id, username, user_id)
-            VALUES (?, ?, ?)
-            ON CONFLICT(guild_id, username, user_id)
-                DO UPDATE SET username = excluded.username
+            INSERT INTO PingsPerUsername (guild_id, username, user_id, every_track, globals_only)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(guild_id, username, user_id, every_track, globals_only)
+                DO UPDATE SET 
+                username = excluded.username
+                every_track = excluded.every_track
+                globals_only = excluded.globals_only
             """,
-            (ctx.guild_id, username, ctx.author.id,)
+            (ctx.guild_id, username, ctx.author.id, every_track, globals_only)
         )
         db_conn.commit()
         await ctx.respond(content=f"You will now be pinged by tracks with the user \"{username}\"")
