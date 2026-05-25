@@ -57,6 +57,8 @@ def create_database() -> None:
             guild_id INTEGER NOT NULL,
             username TEXT    NOT NULL,
             user_id  INTEGER NOT NULL,
+            every_track INTEGER NOT NULL DEFAULT 1,
+            globals_only INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY (guild_id, username, user_id)
         )
         """
