@@ -117,7 +117,6 @@ class MainCommands(commands.Cog):
             VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(guild_id, username, user_id, every_track, globals_only)
                 DO UPDATE SET 
-                username = excluded.username
                 every_track = excluded.every_track
                 globals_only = excluded.globals_only
             """,

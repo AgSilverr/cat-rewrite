@@ -57,8 +57,8 @@ def create_database() -> None:
             guild_id INTEGER NOT NULL,
             username TEXT    NOT NULL,
             user_id  INTEGER NOT NULL,
-            every_track INTEGER NOT NULL DEFAULT 1,
-            globals_only INTEGER NOT NULL DEFAULT 0,
+            every_track BOOLEAN NOT NULL DEFAULT TRUE,
+            globals_only BOOLEAN NOT NULL DEFAULT FALSE,
             PRIMARY KEY (guild_id, username, user_id)
         )
         """
@@ -72,6 +72,22 @@ def create_database() -> None:
             guild_id   INTEGER PRIMARY KEY,
             preference INTEGER NOT NULL DEFAULT 2
         )
+        """
+    )
+
+    db_conn.commit()
+
+def fix_up_database() -> None:
+    db_cursor.execute(
+        """
+        ALTER TABLE "PingsPerUsername"
+        ADD COLUMN every_track BOOLEAN NOT NULL DEFAULT TRUE
+        """
+    )
+    db_cursor.execute(
+        """
+        ALTER TABLE "PingsPerUsername"
+        ADD COLUMN globals_only BOOLEAN NOT NULL DEFAULT FALSE
         """
     )
 
@@ -144,6 +160,7 @@ def main() -> None:
 
     try:
         create_database()
+        fix_up_database()
         setup_commands(bot)
 
         dotenv.load_dotenv()
