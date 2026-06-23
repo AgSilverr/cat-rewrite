@@ -218,6 +218,15 @@ class utils:
             "egerarilia": [enigmatic[0], enigmatic[1], "Eggshell Cave"],
             "jubilyte": [enigmatic[0], enigmatic[1], "Firework Cave"],
             "resonance": [enigmatic[0], enigmatic[1], "Floral Cave"],
+            "everbloom": [exotic[0], exotic[1], "Floral Cave"],
+            "eleggtricity": [exquisite[0], exquisite[1], "Eggshell Cave"],
+            "trifolium": [exquisite[0], exquisite[1], "Lucky Cave"],
+            "cl0ver": [transcendent[0], transcendent[1], "Lucky Cave"],
+            "faberge of mining": [transcendent[0], transcendent[1], "Eggshell Cave"],
+            "aurovelle": [transcendent[0], transcendent[1], "Firework Cave"],
+            "prosperity": [unfathomable[0], unfathomable[1], "Lucky Cave"],
+            "retroscade": [unfathomable[0], unfathomable[1], "Firework Cave"],
+            "evanessence": [otherworldly[0], otherworldly[1], "Floral Cave"],
         }
 
         attributes = cave_exclusives.get(ore_name, None)
