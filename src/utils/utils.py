@@ -214,6 +214,10 @@ class utils:
             "blaze crystal": [exquisite[0], exquisite[1], "Solar Cave"],
             "cygni": [enigmatic[0], enigmatic[1], "Solar Cave"],
             "x-flare": [unfathomable[0], unfathomable[1], "Solar Cave"],
+            "shortcake": [enigmatic[0], enigmatic[1], "Candied Cave"],
+            "egerarilia": [enigmatic[0], enigmatic[1], "Eggshell Cave"],
+            "jubilyte": [enigmatic[0], enigmatic[1], "Firework Cave"],
+            "resonance": [enigmatic[0], enigmatic[1], "Floral Cave"],
         }
 
         attributes = cave_exclusives.get(ore_name, None)
@@ -402,7 +406,7 @@ class utils:
         cave_exclusive: bool = attributes != None and attributes.is_cave_exclusive
         
         normal_cave_exc_unfaths: list[str] = ["cataclysmium", "antlerion", "thermazine", "low.hp", "empress of light", "thumb crystal", "x-flare", "shadow cherkasyl", "ghostwalker"]
-        ion_cave_exc_enigs: list[str] = ["monojit", "illusorium", "collapse", "sword waltz", "geometrix", "generic68-b", "astraea", "aetherion"]
+        ion_cave_exc_enigs: list[str] = ["monojit", "illusorium", "collapse", "sword waltz", "geometrix", "generic68-b", "astraea", "aetherion", "shortcake", "resonance", "egerarilia", "jubilyte"]
         if (ore_rank == OreTiers.UNFATHOMABLE and ore_type == "NORMAL" and not cave_type) or\
             (ore_rank == OreTiers.ENIGMATIC and ore_type == "IONIZED" and not cave_exclusive and not cave_type) or\
             (ore_name in normal_cave_exc_unfaths and ore_type == "NORMAL") or\
