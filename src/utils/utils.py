@@ -265,12 +265,14 @@ class utils:
                     base_rarity = CAVE_ORES["Starry Cave"]["ores"][ore_name][ORE_TYPE_TO_RANK.get(ore_type)] * 3
 
             if loadout and loadout != "":  # prevent IndexError in split
-                salad = True if ("Ambrosia Salad" in loadout or loadout.split(", ")[0] == "57 Leaf Clover") else False
+                salad_57 = True if ("Ambrosia Salad" in loadout or loadout.split(", ")[0] == "57 Leaf Clover") else False
+                salad_100 = True if (loadout.split(", ")[0] == "100 Leaf Clover") else False
             else:
-                salad = False
+                salad_57 = False
+                salad_100 = False
 
             adjusted = base_rarity * (
-                CAVE_ORES[str(cave_type)]['rarity'] if cave_type != "Gilded Cave" else 57 if salad else 5700)
+                CAVE_ORES[str(cave_type)]['rarity'] if cave_type != "Gilded Cave" else 57 if salad_57 else 100 if salad_100 else 5700)
 
             is_floor_exclusive = ore_name == "Empress of Light" or ore_name == "Aurora Polaris" or ore_name == "Solemn Lamentine"
             if is_floor_exclusive:

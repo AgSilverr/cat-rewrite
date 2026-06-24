@@ -232,6 +232,8 @@ class MiscCommands(commands.Cog):
             adjusted_rarity_norm = utils.get_ore_rarity(ore_name=ore_name, base_rarity=base_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=True, run_nebulova=False)
             if cave_type == "Gilded Cave":
                 text += f"Adjusted Rarity (5700): 1/{round(adjusted_rarity_norm * decimal.Decimal(1.88)):,} [CC] | 1/{adjusted_rarity_norm:,}\n"
+                adjusted_rarity_100_leaf = utils.get_ore_rarity(ore_name=ore_name, base_rarity=base_rarity, ore_type=ore_type, cave_type=cave_type, loadout="100 Leaf Clover", do_adjusted=True, run_nebulova=False)
+                text += f"Adjusted Rarity (100): 1/{round(adjusted_rarity_100_leaf * decimal.Decimal(1.88)):,} [CC] | 1/{adjusted_rarity_100_leaf:,}\n"
                 adjusted_rarity_salad = utils.get_ore_rarity(ore_name=ore_name, base_rarity=base_rarity, ore_type=ore_type, cave_type=cave_type, loadout="57 Leaf Clover", do_adjusted=True, run_nebulova=False)
                 text += f"Adjusted Rarity (57): 1/{round(adjusted_rarity_salad * decimal.Decimal(1.88)):,} [CC] | 1/{adjusted_rarity_salad:,}\n"
             else:
