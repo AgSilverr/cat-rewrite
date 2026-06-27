@@ -19,6 +19,9 @@ async def report_permission_warning(guild: discord.Guild, is_global_channel: boo
         await guild.owner.send(f"I am unable to send tracker messages in the global channel in the server \"**{guild.name}**.\" I am likely missing permissions to send messages in the global channel you have set. Please make sure I have administrator permissions and that I can send messages in the set global channel.")
     else:
         await guild.owner.send(f"I am unable to send tracker messages in the server \"**{guild.name}**.\" I am likely missing permissions to send messages in the tracker channel you have set. Please make sure I have administrator permissions and that I can send messages in the set tracker channel.")
+    
+    print(f"Sent a permission warning to server {guild.name} (Guild ID: {guild.id})")
+    logger.debug(f"Sent a permission warning to server {guild.name} (Guild ID: {guild.id})")
 
 # Helper function
 async def attempt_to_send_to_channel(channel: discord.TextChannel, content: str = None, embed: discord.Embed = None, is_global_channel: bool = False) -> None:
