@@ -1,4 +1,4 @@
-import os, re, traceback, dotenv
+import os, re, traceback, dotenv, asyncio
 
 from commands.cogs import setup_commands
 from utils.defs import *
@@ -72,6 +72,20 @@ def create_database() -> None:
 
     db_conn.commit()
 
+async def update_presence() -> None:
+    while True:
+        guild_count = db_cursor.execute("SELECT COUNT(*) FROM ChannelsPerGuild", ).fetchone()[0]
+        activity = discord.Activity(
+            type=discord.ActivityType.playing,
+            name=f"Tracking in {guild_count} servers!"
+        )
+
+        await bot.change_presence(
+            activity=activity
+        )
+
+        await asyncio.sleep(60 * 10) # Update our presence every 10 minutes.
+
 def fix_up_database() -> None:
     return
 
@@ -89,17 +103,7 @@ def main() -> None:
         print("Bot has connected.")
         logger.debug("Bot has connected.")
 
-        guild_count = db_cursor.execute("SELECT COUNT(*) FROM ChannelsPerGuild", ).fetchone()[0]
-        activity = discord.Activity(
-            type=discord.ActivityType.playing,
-            name=f"Tracking in {guild_count} servers!"
-        )
-
-        # mylist = ["Voxel Venture", "REx: Reincarnated", "Stellar Planets 🪐", "Earth's Bounty", "The Celestial Caverns", "Azure Mines", "Malachite Miners 2", "Untitled Mining Game"]
-        await bot.change_presence(
-            status=discord.Status.online,
-            activity=activity
-        )
+        asyncio.create_task(update_presence())
     
     @bot.event
     async def on_disconnect() -> None:
