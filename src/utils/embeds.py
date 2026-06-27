@@ -7,6 +7,29 @@ from discord import Embed
 from utils.defs import *
 from utils.utils import *
 
+async def report_permission_warning(guild: discord.Guild, is_global_channel: bool) -> None:
+    if not guild:
+        return
+    
+    if not guild.owner:
+        return
+    
+    # DM the owner of the server to report that we are missing permissions.
+    if is_global_channel:
+        await guild.owner.send(f"I am unable to send tracker messages in the global channel in the server \"**{guild.name}**.\" I am likely missing permissions to send messages in the global channel you have set. Please make sure I have administrator permissions and that I can send messages in the set global channel.")
+    else:
+        await guild.owner.send(f"I am unable to send tracker messages in the server \"**{guild.name}**.\" I am likely missing permissions to send messages in the tracker channel you have set. Please make sure I have administrator permissions and that I can send messages in the set tracker channel.")
+
+# Helper function
+async def attempt_to_send_to_channel(channel: discord.TextChannel, content: str = None, embed: discord.Embed = None, is_global_channel: bool = False) -> None:
+    if not channel.can_send(embed):
+        await report_permission_warning(guild=channel.guild, is_global_channel=is_global_channel)
+        return
+
+    try:
+        await channel.send(content=content, embed=embed)
+    except discord.errors.Forbidden: # This probably won't be tripped since the above can_send function will catch it first.
+        await report_permission_warning(guild=channel.guild, is_global_channel=is_global_channel)
 
 # this has the same parameters as send_data.
 def create_embed(
@@ -167,9 +190,9 @@ async def send_data(
                     global_message = f"{ping}{global_message}"
 
                 if ping_ids:
-                    await tracker_channel.send(content=f"{global_message}\n{pings}", embed=embed)
+                    await attempt_to_send_to_channel(channel=tracker_channel, content=f"{global_message}\n{pings}", embed=embed)
                 else:
-                    await tracker_channel.send(content=global_message, embed=embed)
+                    await attempt_to_send_to_channel(channel=tracker_channel, content=global_message, embed=embed)
 
                 if global_channel_id:
                     global_channel: discord.TextChannel = bot.get_channel(global_channel_id)
@@ -177,13 +200,13 @@ async def send_data(
                         logger.error(msg=f"[send_data] Couldn't find global channel {global_channel_id} in guild id {guild_id}!")
                         # TODO: stax; remove the channel from the database if its not found.
                         continue
-
-                    await global_channel.send(embed=embed)
+                    
+                    await attempt_to_send_to_channel(channel=global_channel, embed=embed, is_global_channel=True)
             else:
                 if ping_ids:
-                    await tracker_channel.send(content=pings, embed=embed)
+                    await attempt_to_send_to_channel(channel=tracker_channel, content=pings, embed=embed)
                 else:
-                    await tracker_channel.send(embed=embed)
+                    await attempt_to_send_to_channel(channel=tracker_channel, embed=embed)
 
     # stax; send to channels it needs to be sent to.
     embed: discord.Embed = create_embed(ore_name=ore_name, ore_rarity=ore_rarity, cave_type=cave_type,
