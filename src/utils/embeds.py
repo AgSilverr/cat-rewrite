@@ -231,7 +231,7 @@ async def send_data(
         wdor_global_channel: discord.TextChannel = bot.get_channel(1508240892933443604)
         if wdor_global_channel:
             text: str | None = None
-            if tier_rank >= OreTiers.OTHERWORLDLY or base_rarity >= 2_000_000_000 or adjusted_rarity >= 2_000_000_000:
+            if tier_rank >= OreTiers.OTHERWORLDLY or base_rarity >= 2_000_000_000 or (cave_type is not None and adjusted_rarity >= 2_000_000_000):
                 text = "<@&1505322938201669763>"
             await wdor_global_channel.send(content=text, embed=embed)
 
