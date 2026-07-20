@@ -187,10 +187,19 @@ async def send_data(
                 else:
                     global_message = ""
 
-                # Glaggleland's custom tier ping system
                 if guild_id == 1248099267449458688:
                     ping = utils.get_global_role_ping(ore_name=ore_name.lower(), ore_rarity=ore_rarity, ore_rank=tier_rank, ore_type=ore_type, cave_type=cave_type)
                     global_message = f"{ping}{global_message}"
+                elif guild_id == 1505320837916659783:
+                    base_rarity: int = utils.get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type,
+                                      loadout=loadout, do_adjusted=False, run_nebulova=True)
+                    adjusted_rarity: int = 0
+                    if cave_type is not None:
+                        adjusted_rarity = utils.get_ore_rarity(ore_name=ore_name, base_rarity=base_rarity, ore_type=ore_type,
+                                                  cave_type=cave_type, loadout=loadout, do_adjusted=True,
+                                                  run_nebulova=False)
+                    if tier_rank < OreTiers.OTHERWORLDLY and ore_rarity < 2_000_000_000 and not (cave_type is not None and adjusted_rarity >= 2_000_000_000):
+                        global_message = ""
 
                 if ping_ids:
                     await attempt_to_send_to_channel(channel=tracker_channel, content=f"{global_message}\n{pings}", embed=embed)
@@ -230,10 +239,7 @@ async def send_data(
             await cat_global_channel.send(embed=embed)
         wdor_global_channel: discord.TextChannel = bot.get_channel(1508240892933443604)
         if wdor_global_channel:
-            text: str | None = None
-            if tier_rank >= OreTiers.OTHERWORLDLY or base_rarity >= 2_000_000_000 or (cave_type is not None and adjusted_rarity >= 2_000_000_000):
-                text = "<@&1505322938201669763>"
-            await wdor_global_channel.send(content=text, embed=embed)
+            await wdor_global_channel.send(embed=embed)
 
     if blocks_mined <= 5000000:
         cat_beginner_channel: discord.TextChannel = bot.get_channel(1311792395414667304)
