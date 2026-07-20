@@ -220,16 +220,21 @@ async def send_data(
         logger.error("[send_data] Missing embed, can't send anything!")
         return
     
+    base_rarity: int = utils.get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type,
+                                      loadout=loadout, do_adjusted=False, run_nebulova=True)
+    adjusted_rarity = utils.get_ore_rarity(ore_name, base_rarity, ore_type, cave_type, loadout, do_adjusted=True,
+                                     run_nebulova=False) * decimal.Decimal(1.88)
     if is_global:
         cat_global_channel: discord.TextChannel = bot.get_channel(1306083504370618470)
         if cat_global_channel:
             await cat_global_channel.send(embed=embed)
         wdor_global_channel: discord.TextChannel = bot.get_channel(1508240892933443604)
         if wdor_global_channel:
-            await wdor_global_channel.send(embed=embed)
+            text: str | None = None
+            if tier_rank >= OreTiers.OTHERWORLDLY or base_rarity >= 2_000_000_000 or adjusted_rarity >= 2_000_000_000:
+                text = "<@&1505322938201669763>"
+            await wdor_global_channel.send(content=text, embed=embed)
 
-    base_rarity: int = utils.get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type,
-                                      loadout=loadout, do_adjusted=False, run_nebulova=True)
     if blocks_mined <= 5000000:
         cat_beginner_channel: discord.TextChannel = bot.get_channel(1311792395414667304)
         if cat_beginner_channel and embed:
@@ -249,8 +254,6 @@ async def send_data(
                 await webhook.send(embed=embed)
             await session.close()
 
-    adjusted_rarity = utils.get_ore_rarity(ore_name, base_rarity, ore_type, cave_type, loadout, do_adjusted=True,
-                                     run_nebulova=False) * decimal.Decimal(1.88)
     cat_rare_ore_tracker_channel = bot.get_channel(1407955712209977415)
     if cat_rare_ore_tracker_channel:
         if cave_type is not None and adjusted_rarity >= 100_000_000_000:
