@@ -414,7 +414,7 @@ class utils:
         adjusted_ore_rarity: float = utils.get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=True, run_nebulova=True)
         event_ore_rarity: float = event_rarities.get(ore_name, base_ore_rarity) * (1 if not event_rarities.get(ore_name, None) else (1 if ore_type == "NORMAL" else 20 if ore_rank == OreTiers.UNFATHOMABLE else 15))
         attributes: OreAttributes | None = utils.get_ore_attributes(ore_name=ore_name)
-        cave_exclusive: bool = attributes != None and attributes.is_cave_exclusive
+        cave_exclusive: bool = attributes is not None and attributes.is_cave_exclusive
         
         normal_cave_exc_unfaths: list[str] = ["cataclysmium", "antlerion", "thermazine", "low.hp", "empress of light", "thumb crystal", "x-flare", "shadow cherkasyl", "ghostwalker", "retroscade", "prosperity"]
         ion_cave_exc_enigs: list[str] = ["monojit", "illusorium", "collapse", "sword waltz", "geometrix", "generic68-b", "astraea", "aetherion", "shortcake", "resonance", "egerarilia", "jubilyte"]
