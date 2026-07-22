@@ -227,6 +227,29 @@ class utils:
             "prosperity": [unfathomable[0], unfathomable[1], "Lucky Cave"],
             "retroscade": [unfathomable[0], unfathomable[1], "Firework Cave"],
             "evanessence": [otherworldly[0], otherworldly[1], "Floral Cave"],
+            "shellker": [common[0], common[1], "Eggshell Cave"],
+            "albumin": [common[0], common[1], "Eggshell Cave"],
+            "vogel": [uncommon[0], uncommon[1], "Eggshell Cave"],
+            "bonnite": [rare[0], rare[1], "Eggshell Cave"],
+            "chalaza": [rare[0], rare[1], "Eggshell Cave"],
+            "egguinox": [master[0], master[1], "Eggshell Cave"],
+            "bungy": [surreal[0], surreal[1], "Eggshell Cave"],
+            "yolkbang": [surreal[0], surreal[1], "Eggshell Cave"],
+            "sugarmuck": [master[0], master[1], "Candied Cave"],
+            "charmoss": [common[0], common[1], "Lucky Cave"],
+            "talismine": [common[0], common[1], "Lucky Cave"],
+            "imperial jade": [uncommon[0], uncommon[1], "Lucky Cave"],
+            "pixy emerald": [rare[0], rare[1], "Lucky Cave"],
+            "gildice": [master[0], master[1], "Lucky Cave"],
+            "halcylite": [surreal[0], surreal[1], "Lucky Cave"],
+            "rotatrim": [mythic[0], mythic[1], "Lucky Cave"],
+            "verdite": [common[0], common[1], "Floral Cave"],
+            "blosmite": [common[0], common[1], "Floral Cave"],
+            "paxonite": [uncommon[0], uncommon[1], "Floral Cave"],
+            "honeycomb": [uncommon[0], uncommon[1], "Floral Cave"],
+            "maripollum": [rare[0], rare[1], "Floral Cave"],
+            "floresite": [master[0], master[1], "Floral Cave"],
+            "beehive": [mythic[0], mythic[1], "Floral Cave"],
         }
 
         attributes = cave_exclusives.get(ore_name, None)
@@ -274,7 +297,7 @@ class utils:
             adjusted = base_rarity * (
                 CAVE_ORES[str(cave_type)]['rarity'] if cave_type != "Gilded Cave" else 57 if salad_57 else 100 if salad_100 else 5700)
 
-            is_floor_exclusive = ore_name == "Empress of Light" or ore_name == "Aurora Polaris" or ore_name == "Solemn Lamentine"
+            is_floor_exclusive = ore_name == "Empress of Light" or ore_name == "Aurora Polaris" or ore_name == "Solemn Lamentine" or ore_name == "Bungy"
             if is_floor_exclusive:
                 adjusted *= decimal.Decimal(3.5846)
 
