@@ -37,6 +37,9 @@ def get_stuff(ore_name: str, ore_rarity: int) -> list[str, int] | None:
         case "electrolyx":
             ion_multiplier = 45
             tier_name = "Exquisite"
+        case "eggsquisite":
+            ion_multiplier = 45
+            tier_name = "Exquisite"
         case _:
             if ore_rarity <= 999:  # common
                 ion_multiplier = 110
