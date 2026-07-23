@@ -1,17 +1,9 @@
-import decimal
-import os
-
-import aiohttp
+import config, decimal, discord, aiohttp, utils
 from discord import Embed
-
-from utils.defs import *
-from utils.utils import *
+from defs import AdjustedPreferences, bot, db_cursor, logger, OreTiers, TIER_NAME_TO_COLOR_HEX, TIER_NAME_TO_TIER_RANK
 
 async def report_permission_warning(guild: discord.Guild, is_global_channel: bool) -> None:
-    if not guild:
-        return
-    
-    if not guild.owner:
+    if guild.owner is None:
         return
     
     # DM the owner of the server to report that we are missing permissions.
@@ -95,7 +87,6 @@ def create_embed(
                                     value=f"1/{adjusted_rarity_cc:,} [CC] | 1/{adjusted_rarity:,}")
 
     # stax; prevent the bot from sending something that is too long
-    # this is probably never going to be true (?), but i like to be safe
     if len(embed) > 6000:
         logger.error(msg="[create_embed] Embed was too long!")
         return None
@@ -129,7 +120,7 @@ async def send_data(
                               tier_rank >= OreTiers.TRANSCENDENT and ore_type == "SPECTRAL")
     
     # stax; fix up the cave type for any mistakes the rex tracker might have made
-    ore_attributes: OreAttributes = utils.get_ore_attributes(ore_name=ore_name)
+    ore_attributes: utils.OreAttributes = utils.get_ore_attributes(ore_name=ore_name)
     if ore_attributes and ore_attributes.is_cave_exclusive\
           and ore_name.lower() != "black flame" and ore_attributes.cave_type != "Starry Cave": # fuck you multi-cave-type cave exclusives!
         cave_type = ore_attributes.cave_type
@@ -148,14 +139,14 @@ async def send_data(
         player_dict.setdefault(guild_id, []).append(_username)
 
     for guild_id, tracker_channel_id, global_channel_id in channel_data:
-        players: list[str] = player_dict.get(int(guild_id), [])
-        if not players or not len(players):
+        players: list[str] | None = player_dict.get(int(guild_id), None)
+        if players is None or len(players) == 0:
             continue
         # stax; use lower() so that people dont have to put exact users. roblox doesnt allow names with different cases but same letters anyways
         # this checks if the username is tracked in this server.
         if username.lower() in [player.lower() for player in players]:
-            tracker_channel: discord.TextChannel = bot.get_channel(tracker_channel_id)
-            if not tracker_channel:
+            tracker_channel: discord.TextChannel | None = bot.get_channel(tracker_channel_id)
+            if tracker_channel is None:
                 logger.error(msg=f"[send_data] Couldn't find tracker channel {tracker_channel_id} in guild id {guild_id}!")
                 # TODO: stax; remove the channel from the database if its not found.
                 continue
@@ -207,8 +198,8 @@ async def send_data(
                     await attempt_to_send_to_channel(channel=tracker_channel, content=global_message, embed=embed)
 
                 if global_channel_id:
-                    global_channel: discord.TextChannel = bot.get_channel(global_channel_id)
-                    if not global_channel:
+                    global_channel: discord.TextChannel | None = bot.get_channel(global_channel_id)
+                    if global_channel is None:
                         logger.error(msg=f"[send_data] Couldn't find global channel {global_channel_id} in guild id {guild_id}!")
                         # TODO: stax; remove the channel from the database if its not found.
                         continue
@@ -220,55 +211,55 @@ async def send_data(
                 else:
                     await attempt_to_send_to_channel(channel=tracker_channel, embed=embed)
 
-    # stax; send to channels it needs to be sent to.
-    embed: discord.Embed = create_embed(ore_name=ore_name, ore_rarity=ore_rarity, cave_type=cave_type,
-                                                ore_tier=ore_tier, ore_type=ore_type, event=event, world=world,
-                                                username=username, loadout=loadout, blocks_mined=blocks_mined,
-                                                guild_id=None, manual_tracked=False)
-    if not embed:
-        logger.error("[send_data] Missing embed, can't send anything!")
-        return
-    
-    base_rarity: int = utils.get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type,
-                                      loadout=loadout, do_adjusted=False, run_nebulova=True)
-    adjusted_rarity = utils.get_ore_rarity(ore_name, base_rarity, ore_type, cave_type, loadout, do_adjusted=True,
-                                     run_nebulova=False) * decimal.Decimal(1.88)
-    if is_global:
-        cat_global_channel: discord.TextChannel = bot.get_channel(1306083504370618470)
-        if cat_global_channel:
-            await cat_global_channel.send(embed=embed)
-        wdor_global_channel: discord.TextChannel = bot.get_channel(1508240892933443604)
-        if wdor_global_channel:
-            await wdor_global_channel.send(embed=embed)
+    if not config.DEV_MODE:
+        # stax; send to channels it needs to be sent to.
+        embed: discord.Embed = create_embed(ore_name=ore_name, ore_rarity=ore_rarity, cave_type=cave_type,
+                                                    ore_tier=ore_tier, ore_type=ore_type, event=event, world=world,
+                                                    username=username, loadout=loadout, blocks_mined=blocks_mined,
+                                                    guild_id=None, manual_tracked=False)
+        if embed is None:
+            logger.error("[send_data] Missing embed, can't send anything!")
+            return
+        
+        base_rarity: int = utils.get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type,
+                                        loadout=loadout, do_adjusted=False, run_nebulova=True)
+        adjusted_rarity = utils.get_ore_rarity(ore_name, base_rarity, ore_type, cave_type, loadout, do_adjusted=True,
+                                        run_nebulova=False) * decimal.Decimal(1.88)
+        if is_global:
+            cat_global_channel: discord.TextChannel = bot.get_channel(1306083504370618470)
+            if cat_global_channel:
+                await cat_global_channel.send(embed=embed)
+            wdor_global_channel: discord.TextChannel = bot.get_channel(1508240892933443604)
+            if wdor_global_channel:
+                await wdor_global_channel.send(embed=embed)
 
-    if blocks_mined <= 5000000:
-        cat_beginner_channel: discord.TextChannel = bot.get_channel(1311792395414667304)
-        if cat_beginner_channel and embed:
-            if is_global or base_rarity >= 5_000_000_000:
-                await cat_beginner_channel.send(content="<@&1455083226828902566>", embed=embed)
-            else:
-                await cat_beginner_channel.send(embed=embed)
+        if blocks_mined <= 5000000:
+            cat_beginner_channel: discord.TextChannel = bot.get_channel(1311792395414667304)
+            if cat_beginner_channel and embed:
+                if is_global or base_rarity >= 5_000_000_000:
+                    await cat_beginner_channel.send(content="<@&1455083226828902566>", embed=embed)
+                else:
+                    await cat_beginner_channel.send(embed=embed)
 
-        async with aiohttp.ClientSession() as session:  # sending to glaggleland
-            webhook = discord.Webhook.from_url(
-                url=os.getenv("GLAGGLELAND_WEBHOOK"),
-                session=session,
-            )
-            if is_global == True or base_rarity >= 5_000_000_000:
-                await webhook.send("<@&1326276408087023638>", embed=embed)
-            else:
-                await webhook.send(embed=embed)
-            await session.close()
+            if config.WEBHOOK_LINK is not None:
+                async with aiohttp.ClientSession() as session: # sending to glaggleland
+                    webhook = discord.Webhook.from_url(
+                        url=config.WEBHOOK_LINK,
+                        session=session,
+                    )
+                    if is_global or base_rarity >= 5_000_000_000:
+                        await webhook.send("<@&1326276408087023638>", embed=embed)
+                    else:
+                        await webhook.send(embed=embed)
+                    await session.close()
 
-    cat_rare_ore_tracker_channel = bot.get_channel(1407955712209977415)
-    if cat_rare_ore_tracker_channel:
-        if cave_type is not None and adjusted_rarity >= 100_000_000_000:
-            await cat_rare_ore_tracker_channel.send("<@&1416256696384487525>", embed=embed)
-        elif tier_rank == OreTiers.IMAGINARY and ore_type != "NORMAL":
-            await cat_rare_ore_tracker_channel.send("<@&1466449671428767895> <@&1416256696384487525>", embed=embed)
-        elif tier_rank == OreTiers.IMAGINARY:
-            await cat_rare_ore_tracker_channel.send("<@&1466449671428767895>", embed=embed)
-        elif base_rarity >= 50_000_000_000:
-            await cat_rare_ore_tracker_channel.send("<@&1416256696384487525>", embed=embed)
-    else:
-        logger.error("[send_data] The rare ore tracker channel is missing!")
+        cat_rare_ore_tracker_channel = bot.get_channel(1407955712209977415)
+        if cat_rare_ore_tracker_channel is not None:
+            if cave_type is not None and adjusted_rarity >= 100_000_000_000:
+                await cat_rare_ore_tracker_channel.send("<@&1416256696384487525>", embed=embed)
+            elif tier_rank == OreTiers.IMAGINARY and ore_type != "NORMAL":
+                await cat_rare_ore_tracker_channel.send("<@&1466449671428767895> <@&1416256696384487525>", embed=embed)
+            elif tier_rank == OreTiers.IMAGINARY:
+                await cat_rare_ore_tracker_channel.send("<@&1466449671428767895>", embed=embed)
+            elif base_rarity >= 50_000_000_000:
+                await cat_rare_ore_tracker_channel.send("<@&1416256696384487525>", embed=embed)

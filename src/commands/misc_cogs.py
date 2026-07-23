@@ -2,20 +2,20 @@
 Miscellaneous cogs. Put commands in here that are non-essential to the functionality of the bot.
 """
 
-import traceback
+import traceback, decimal, utils
 
 from discord.ext import commands
 
-from utils.defs import *
-from utils.utils import *
+from defs import *
 
+def get_data_for_ore(ore_name: str, ore_rarity: int) -> utils.OreAttributes | None: 
+    tier_name: str = "Common"
+    ion_multiplier: int = 1
 
-
-# lazy
-def get_stuff(ore_name: str, ore_rarity: int) -> list[str, int] | None: 
-    ion_multiplier = 1
-    tier_name = "Common"
     match ore_name:
+        case "agsperum's charm":
+            ion_multiplier = 30
+            tier_name = "Enigmatic"
         case "protoflare":
             ion_multiplier = 45
             tier_name = "Exquisite"
@@ -84,8 +84,10 @@ def get_stuff(ore_name: str, ore_rarity: int) -> list[str, int] | None:
     if ion_multiplier == 1:
         return None
 
-    return [tier_name, ion_multiplier]
-
+    ore_attributes: utils.OreAttributes = utils.OreAttributes()
+    ore_attributes.ion_mult = ion_multiplier
+    ore_attributes.tier_name = tier_name
+    return ore_attributes
 
 class MiscCommands(commands.Cog):
     def __init__(self, _bot: discord.Bot):
@@ -93,17 +95,17 @@ class MiscCommands(commands.Cog):
 
     async def cog_command_error(self, ctx: discord.ApplicationContext, error: Exception):
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.respond(f"This command is on cooldown. Retry in {error.retry_after} seconds")
+            await ctx.respond(f"This command is on cooldown. Retry in {error.retry_after} seconds", ephemeral=True)
             return
         elif isinstance(error, commands.NotOwner):
-            await ctx.respond(f"You are not the owner of this bot")
+            await ctx.respond(f"You are not the owner of this bot", ephemeral=True)
             return
 
         trace: str = traceback.format_exc()
         if len(trace) > 1900:
             trace = trace[-1900:]
         logger.error(msg=trace)
-        await ctx.respond(content=f"An error occurred while running the command:\n{trace}")
+        await ctx.respond(content=f"An error occurred while running the command:\n```py\n{trace}\n```")
 
     @commands.slash_command()
     @commands.guild_only()
@@ -156,6 +158,7 @@ class MiscCommands(commands.Cog):
     @commands.slash_command(
             integration_types={ discord.IntegrationType.user_install, discord.IntegrationType.guild_install } # Allow this to be used outside of servers where the bot is.
         )
+    @commands.cooldown(rate=3, per=5, type=commands.BucketType.user)
     @discord.commands.option("ore_name", str, description="The name of the ore you want the info of", autocomplete=utils.ore_name_autocomplete)
     @discord.commands.option("ore_type", str, description="The variant of the ore", choices=["Normal", "Ionized", "Spectral"], required=False, default="Normal")
     @discord.commands.option("cave_type", str, description="The cave type of the ore. Not required for cave exclusives", autocomplete=utils.cave_type_autocomplete, required=False, default=None)
@@ -165,14 +168,20 @@ class MiscCommands(commands.Cog):
         ore_type: str = "Normal",
         cave_type: str = None,
     ):
+        ore_name = ore_name.lower()
+        
         if cave_type is not None and (cave_type.lower() == "none" or ore_name.lower() == "zanarchium"):
             cave_type = None
 
-        if cave_type and cave_type not in CAVE_ORES.keys():
+        # Fix up cave type
+        if cave_type is not None and utils.get_nth_word(cave_type, 2) is None:
+            cave_type = f"{cave_type} Cave"
+
+        if cave_type is not None and cave_type not in CAVE_ORES.keys():
             return await ctx.respond(content=f"Cave type \"{cave_type}\" was not found")
         
         base_rarity: int | None = ALL_ORES.get("Ores", {}).get(ore_name)
-        if not base_rarity:
+        if base_rarity is None:
             return await ctx.respond(content=f"Ore name \"{ore_name}\" was not found")
         
         is_cave_exclusive: bool = False
@@ -180,25 +189,21 @@ class MiscCommands(commands.Cog):
         tier: str = ""
 
         ion_mult: int = 1
-        ore_attr: OreAttributes | None = utils.get_ore_attributes(ore_name=ore_name)
-        if ore_attr:
+        ore_attr: utils.OreAttributes | None = utils.get_ore_attributes(ore_name=ore_name)
+        if ore_attr is not None:
             ion_mult = ore_attr.ion_mult
             tier = ore_attr.tier_name
             is_cave_exclusive = ore_attr.is_cave_exclusive
-            if ore_attr.cave_type != "Starry Cave" or not cave_type:
+            if ore_attr.cave_type != "Starry Cave" or cave_type is None:
                 cave_type = ore_attr.cave_type
         else:
-            if ore_name == "Agsperum's Charm":
-                tier = "Enigmatic"
-                ion_mult = 30
-            else:
-                idk: list[str, int] = get_stuff(ore_name=ore_name.lower(), ore_rarity=base_rarity)
-                if idk:
-                    tier = idk[0]
-                    ion_mult = idk[1]
+            ore_data: utils.OreAttributes | None = get_data_for_ore(ore_name=ore_name.lower(), ore_rarity=base_rarity)
+            if ore_data is not None:
+                tier = ore_data.tier_name
+                ion_mult = ore_data.ion_mult
         
         real_cave_type: str | None = cave_type
-        if ore_name in CAVE_ORES["Starry Cave"]["ores"] and cave_type:
+        if ore_name in CAVE_ORES["Starry Cave"]["ores"] and cave_type is not None:
             if (cave_type == "Gilded Cave" and is_cave_exclusive) or (cave_type != "Starry Cave" and cave_type != "Gilded Cave"):
                 is_nebulova_event = True
                 real_cave_type = "Starry Cave"
@@ -209,7 +214,7 @@ class MiscCommands(commands.Cog):
             else:
                 cave_type = "Darkmatter Cave"
         
-        if cave_type and not is_cave_exclusive and cave_type != "Gilded Cave":
+        if cave_type is not None and not is_cave_exclusive and cave_type != "Gilded Cave":
             base_rarity = CAVE_ORES[real_cave_type]["ores"][ore_name][OreTypes.NORMAL] # leave variant multipliers to below
         
         if ore_type == "Spectral":
@@ -227,11 +232,11 @@ class MiscCommands(commands.Cog):
         if ore_type != "Normal":
             text += f"{ore_type} "
         text += f"{ore_name}"
-        if cave_type:
+        if cave_type is not None:
             text += f" (*{cave_type}*)"
         text += f"\nTier: {tier}\n"
         text += f"Rarity: {round(base_rarity):,}\n"
-        if cave_type:
+        if cave_type is not None:
             adjusted_rarity_norm = utils.get_ore_rarity(ore_name=ore_name, base_rarity=base_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=True, run_nebulova=False)
             if cave_type == "Gilded Cave":
                 text += f"Adjusted Rarity (5700): 1/{round(adjusted_rarity_norm * decimal.Decimal(1.88)):,} [CC] | 1/{adjusted_rarity_norm:,}\n"

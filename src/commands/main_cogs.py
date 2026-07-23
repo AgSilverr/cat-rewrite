@@ -2,14 +2,11 @@
 Main cogs. Put commands in here that are essential to the functionality of the bot.
 """
 
-import traceback
+import discord, traceback, utils
 
 from discord.ext import commands
-
-from utils.defs import *
-from utils.embeds import send_data
-from utils.utils import *
-
+from defs import logger, PermissionLevel, db_conn, db_cursor, TIER_NAME_TO_TIER_RANK
+from embeds import send_data
 class MainCommands(commands.Cog):
     def __init__(self, _bot: discord.Bot):
         self.bot = _bot
@@ -23,10 +20,10 @@ class MainCommands(commands.Cog):
             return
 
         trace: str = traceback.format_exc()
-        if len(trace) > 1900:
-            trace = trace[-1900:]
+        if len(trace) > 1900: # Shorten it so it's below 2,000 characters for Discord
+            trace = trace[-1900:] + "..."
         logger.error(msg=trace)
-        await ctx.respond(content=f"An error occurred while running the command:\n{trace}")
+        await ctx.respond(content=f"An error occurred while running the command:\n```py\n{trace}\n```")
 
     @commands.slash_command()
     @commands.is_owner()
@@ -68,13 +65,13 @@ class MainCommands(commands.Cog):
 
         tracker_channel_id: list | int = db_cursor.execute(
             "SELECT tracker_channel_id FROM ChannelsPerGuild WHERE guild_id = ?", (ctx.guild_id,)).fetchone()
-        if tracker_channel_id:
+        if not tracker_channel_id:
             tracker_channel_id = tracker_channel_id[0]
             if channel.id == tracker_channel_id:
                 await ctx.respond(content="You cannot set the global channel to same channel as the tracker channel")
                 return
 
-        if not tracker_channel_id:
+        if tracker_channel_id is None:
             await ctx.respond(content="Set a tracker channel first.")
             return
         else:
@@ -221,7 +218,7 @@ class MainCommands(commands.Cog):
         existing_users: list[str] = []
         for name in to_be_added:
             if 3 <= len(name) <= 50:
-                if name not in ["@everyone", "@here"]:
+                if name not in ("@everyone", "@here"):
                     if [ctx.guild_id, name] not in existing_pairs:
                         db_cursor.execute(
                             """
@@ -244,7 +241,7 @@ class MainCommands(commands.Cog):
                 message += f"\nSkipped adding existing users: {', '.join(f'`{u}`' for u in existing_users)}"
             else:
                 message += f"Skipped adding existing users: {', '.join(f'`{u}`' for u in existing_users)}"
-        if not len(message):
+        if len(message) == 0:
             message = "No users added"
 
         await ctx.respond(content=message)

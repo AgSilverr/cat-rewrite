@@ -1,9 +1,9 @@
-import os, re, traceback, dotenv, asyncio
+import re, traceback, asyncio, config
 
 from commands.cogs import setup_commands
-from utils.defs import *
-from utils.embeds import send_data
-
+from defs import *
+from embeds import send_data
+from typing import NoReturn
 
 def create_database() -> None:
     """
@@ -72,54 +72,50 @@ def create_database() -> None:
 
     db_conn.commit()
 
-async def update_presence() -> None:
+async def update_presence() -> NoReturn:
     while True:
-        guild_count = db_cursor.execute("SELECT COUNT(*) FROM ChannelsPerGuild", ).fetchone()[0]
-        activity = discord.Activity(
-            type=discord.ActivityType.playing,
-            name=f"Tracking in {guild_count} servers!"
-        )
+        logger.info("Updating presence...")
 
-        await bot.change_presence(
-            activity=activity
-        )
+        guild_count: int = db_cursor.execute("SELECT COUNT(*) FROM ChannelsPerGuild", ).fetchone()[0]
+        activity: discord.Game = discord.Game(name=f"Tracking in {guild_count} servers!")
+
+        await bot.change_presence(activity=activity)
 
         await asyncio.sleep(60 * 10) # Update our presence every 10 minutes.
 
 def fix_up_database() -> None:
     return
 
-
 def main() -> None:
     """
     Main function. Runs the bot.
     """
 
-    @bot.event
+    @bot.listen()
     async def on_connect() -> None:
-        if bot.auto_sync_commands:
-            await bot.sync_commands()
-
         print("Bot has connected.")
         logger.debug("Bot has connected.")
+            
+    @bot.listen()
+    async def on_disconnect() -> None:
+        print("Bot has disconnected.")
+        logger.debug("Bot has disconnected.")
+
+    @bot.listen(once=True)
+    async def on_ready() -> None:
+        print(f"Bot has logged in as \"{bot.user.name}\".")
+        logger.debug(f"Bot has logged in as \"{bot.user.name}\".")
 
         asyncio.create_task(update_presence())
-    
-    @bot.event
-    async def on_disconnect() -> None:
-        print(f"Bot disconnected from Discord gateway")
-        logger.debug(f"Bot disconnected from Discord gateway")
-
-    @bot.event
-    async def on_ready() -> None:
-        print(f"Bot has logged in as {bot.user.name}")
-        logger.debug(f"Bot has logged in as \"{bot.user.name}\"")
 
         print("Ready") # stax; do not remove this!
 
-    @bot.event
+    @bot.listen()
     async def on_message(message: discord.Message) -> None:
-        if message.channel.id in REX_TRACKER_CHANNEL_IDS and message.author.id in REX_WEBHOOK_UIDS and bot.is_ready() == True:
+        if not bot.is_ready():
+            return
+
+        if message.channel.id in REX_TRACKER_CHANNEL_IDS and message.author.id in REX_WEBHOOK_UIDS:
             message_data: discord.Message = await message.channel.fetch_message(
                 message.id)  # stax; needed because webhooks dont contain embed data in on_message
             embed_data: discord.Embed = message_data.embeds[0]
@@ -128,7 +124,7 @@ def main() -> None:
             fields = embed_data.fields
             ore_type = TYPE_BY_CHANNEL_IDS.get(message.channel.id, None)
             
-            reg = re.match("\*\*([a-zA-Z0-9_]+)\*\*.*\*\*(.*)\*\*(?:.*\(\*(.* Cave)\*\))?", embed_data.title)
+            reg = re.match(r"\*\*([a-zA-Z0-9_]+)\*\*.*\*\*(.*)\*\*(?:.*\(\*(.* Cave)\*\))?", embed_data.title)
             username: str = reg.group(1)
             ore_name: str = reg.group(2)
             cave_type: str | None = reg.group(3)
@@ -162,13 +158,12 @@ def main() -> None:
         #fix_up_database()
         setup_commands(bot)
 
-        dotenv.load_dotenv()
-        bot.run(os.getenv("BOT_TOKEN"))
+        bot.run(config.BOT_TOKEN)
     except:
         trace: str = traceback.format_exc()
         logger.error(msg=trace)
 
-        separator: str = {"-"*50}
+        separator: str = "-" * 50
         print(f"\n{separator}\nBot failed to start!!!\n{trace}\n{separator}\n")
 
 
