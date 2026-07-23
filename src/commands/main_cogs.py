@@ -7,6 +7,7 @@ import discord, traceback, utils
 from discord.ext import commands
 from defs import logger, PermissionLevel, db_conn, db_cursor, TIER_NAME_TO_TIER_RANK
 from embeds import send_data
+
 class MainCommands(commands.Cog):
     def __init__(self, _bot: discord.Bot):
         self.bot = _bot
