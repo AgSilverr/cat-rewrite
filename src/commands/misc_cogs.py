@@ -2,11 +2,10 @@
 Miscellaneous cogs. Put commands in here that are non-essential to the functionality of the bot.
 """
 
-import traceback, decimal, utils
+import decimal, discord, traceback, utils
 
 from discord.ext import commands
-
-from defs import *
+from defs import AdjustedPreferences, ALL_ORES, CAVE_ORES, db_conn, db_cursor, logger, OreTypes, PermissionLevel
 
 def get_data_for_ore(ore_name: str, ore_rarity: int) -> utils.OreAttributes | None: 
     tier_name: str = "Common"
