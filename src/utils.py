@@ -420,9 +420,10 @@ def get_global_role_ping(ore_name: str, ore_rarity: float, ore_rank: OreTiers, o
         "∞": 20_000_000_000
     }
 
-    base_ore_rarity: float = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=False, run_nebulova=False)
-    adjusted_ore_rarity: float = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=True, run_nebulova=True)
-    event_ore_rarity: float = event_rarities.get(ore_name, base_ore_rarity) * (1 if not event_rarities.get(ore_name, None) else (1 if ore_type == "NORMAL" else 20 if ore_rank == OreTiers.UNFATHOMABLE else 15))
+    base_ore_rarity: int = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=False, run_nebulova=False)
+    adjusted_ore_rarity: int = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=True, run_nebulova=True) * 1.88
+    adjusted_ore_rarity = round(adjusted_ore_rarity * decimal.Decimal(1.88))
+    event_ore_rarity: int = event_rarities.get(ore_name, base_ore_rarity) * (1 if not event_rarities.get(ore_name, None) else (1 if ore_type == "NORMAL" else 20 if ore_rank == OreTiers.UNFATHOMABLE else 15))
     attributes: OreAttributes | None = get_ore_attributes(ore_name=ore_name)
     cave_exclusive: bool = attributes is not None and attributes.is_cave_exclusive
     
@@ -435,9 +436,9 @@ def get_global_role_ping(ore_name: str, ore_rarity: float, ore_rank: OreTiers, o
         (ore_rank == OreTiers.ZENITH and ore_type == "NORMAL") or\
         (ore_rank == OreTiers.EXCLUSIVE):
         return "<@&1371968654328991895>\n"
-    elif (ore_rank == OreTiers.OTHERWORLDLY and event_ore_rarity <= 1500000000 and not cave_type and ore_type == "NORMAL") or\
+    elif (ore_rank == OreTiers.OTHERWORLDLY and event_ore_rarity <= 1_500_000_000 and not cave_type and ore_type == "NORMAL") or\
         (ore_rank == OreTiers.UNFATHOMABLE and cave_exclusive and (ore_type == "NORMAL" or ore_type == "IONIZED")) or\
-        (ore_rank == OreTiers.UNFATHOMABLE and adjusted_ore_rarity <= 7000000000 and cave_type and ore_type == "NORMAL") or\
+        (ore_rank == OreTiers.UNFATHOMABLE and adjusted_ore_rarity <= 7_000_000_000 and cave_type and ore_type == "NORMAL") or\
         (ore_rank == OreTiers.ENIGMATIC and cave_exclusive and ore_name != "hyperheated quasar" and ore_type == "IONIZED") or\
         (ore_rank == OreTiers.TRANSCENDENT and ore_type == "SPECTRAL" and not cave_type) or\
         (ore_rank == OreTiers.UNFATHOMABLE and ore_type == "IONIZED" and event_ore_rarity <= (300000000 * 20) and not cave_type) or\
