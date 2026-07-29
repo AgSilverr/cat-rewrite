@@ -446,3 +446,4 @@ def get_global_role_ping(ore_name: str, ore_rarity: float, ore_rank: OreTiers, o
         return "## <@&1473111240116273214>\n<@&1371968654328991895>\n"
     else:
         return "# ***<@&1473111272538243082>***\n**<@&1473111240116273214>** <@&1371968654328991895>\n"
+    
