@@ -423,7 +423,16 @@ def get_global_role_ping(ore_name: str, ore_rarity: float, ore_rank: OreTiers, o
     base_ore_rarity: int = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=False, run_nebulova=False)
     adjusted_ore_rarity: int = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=True, run_nebulova=True)
     adjusted_ore_rarity = round(decimal.Decimal(adjusted_ore_rarity) * decimal.Decimal(1.88))
-    event_ore_rarity: int = event_rarities.get(ore_name, base_ore_rarity) * (1 if not event_rarities.get(ore_name, None) else (1 if ore_type == "NORMAL" else 20 if ore_rank == OreTiers.UNFATHOMABLE else 15))
+
+    event_ore_rarity: int = event_rarities.get(ore_name, base_ore_rarity)
+    if ore_type != "NORMAL":
+            if ore_rank == OreTiers.UNFATHOMABLE:
+                event_ore_rarity *= 20
+            else:
+                event_ore_rarity *= 15
+            if ore_type == "SPECTRAL":
+                event_ore_rarity *= 15
+
     attributes: OreAttributes | None = get_ore_attributes(ore_name=ore_name)
     cave_exclusive: bool = attributes is not None and attributes.is_cave_exclusive
     
