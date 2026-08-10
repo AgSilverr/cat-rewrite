@@ -1,24 +1,27 @@
 import discord, enum, json, logging, sqlite3
+from typing import TypeAlias
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot: discord.Bot = discord.Bot(intents=intents)
 
-REX_WEBHOOK_UIDS: tuple[int] = (
+REX_WEBHOOK_UIDS: tuple[int, int, int] = (
     1259168578419163166, 1259168752591966229, 1259168868581113947
 )  # stax; rex webhook user ids, normal - spectral
-REX_TRACKER_CHANNEL_IDS: tuple[int] = (
+REX_TRACKER_CHANNEL_IDS: tuple[int, int, int] = (
     967252613227769876, 967252672170299402, 967252684807749752
 )  # stax; rex tracker channel ids, normal - spectral
+
+DiscordChannel: TypeAlias = discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.Thread | discord.DMChannel | discord.GroupChannel | None
 
 db_conn: sqlite3.Connection = sqlite3.connect("database.db")
 db_cursor: sqlite3.Cursor = db_conn.cursor()
 
 # stax; don't remove the src/ prefix because cybrancee will shit itself
 with open("src/cave_ores.json", "r", encoding="utf-8") as cave_ores_json:
-    CAVE_ORES: dict = json.load(cave_ores_json)
+    CAVE_ORES: dict[str, dict[str, int | dict[str, list[int]]]] = json.load(cave_ores_json)
 with open("src/all_ores.json", "r", encoding="utf-8") as all_ores_json:
-    ALL_ORES: dict = json.load(all_ores_json)
+    ALL_ORES: dict[str, dict[str, int]] = json.load(all_ores_json)
 
 logger: logging.Logger = logging.getLogger(name="logger")
 logging.basicConfig(

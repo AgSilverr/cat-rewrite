@@ -103,6 +103,9 @@ def main() -> None:
 
     @bot.listen(once=True)
     async def on_ready() -> None:
+        if bot.user is None:
+            return
+
         print(f"Bot has logged in as \"{bot.user.name}\".")
         logger.debug(f"Bot has logged in as \"{bot.user.name}\".")
 
@@ -120,19 +123,29 @@ def main() -> None:
                 message.id)  # stax; needed because webhooks dont contain embed data in on_message
             embed_data: discord.Embed = message_data.embeds[0]
 
-            world: str = embed_data.description
-            fields = embed_data.fields
-            ore_type = TYPE_BY_CHANNEL_IDS.get(message.channel.id, None)
+            world: str | None = embed_data.description
+            fields: list[discord.EmbedField] = embed_data.fields
+            ore_type: str = TYPE_BY_CHANNEL_IDS[message.channel.id]
+
+            if embed_data.title is None:
+                logger.error(f"[on_message] Found a valid message but failed to parse the embed title!\nTitle: None")
+                return
             
-            reg = re.match(r"\*\*([a-zA-Z0-9_]+)\*\*.*\*\*(.*)\*\*(?:.*\(\*(.* Cave)\*\))?", embed_data.title)
+            reg: re.Match | None = re.match(r"\*\*([a-zA-Z0-9_]+)\*\*.*\*\*(.*)\*\*(?:.*\(\*(.* Cave)\*\))?", embed_data.title)
+            if reg is None:
+                logger.error(f"[on_message] Found a valid message but failed to parse the embed title!\nTitle: {embed_data.title}")
+                return
+
             username: str = reg.group(1)
             ore_name: str = reg.group(2)
             cave_type: str | None = reg.group(3)
 
-            tier: str = TIER_COLOR_TO_TIER_NAME.get(str(embed_data.color), None)
-            if tier is None:
-                logger.error(f"[on_message] Missing color for tier: {str(embed_data.color)} {type(str(embed_data.color))}")
-                logger.debug(f"[on_message] {embed_data.color.r}, {embed_data.color.g}, {embed_data.color.b}, {embed_data.color}\n")
+            tier: TierNames | None = None
+            if embed_data.color is not None:
+                tier = TIER_COLOR_TO_TIER_NAME.get(str(embed_data.color), None)
+                if tier is None:
+                    logger.error(f"[on_message] Missing color for tier: {str(embed_data.color)} {type(str(embed_data.color))}")
+                    logger.debug(f"[on_message] {embed_data.color.r}, {embed_data.color.g}, {embed_data.color.b}, {embed_data.color}\n")
 
             base_rarity: int = int(float(fields[0].value.split()[0].replace("1/", "").replace(",", "")))
             blocks_mined: int = int(fields[1].value.replace(",", ""))

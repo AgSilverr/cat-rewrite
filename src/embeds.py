@@ -1,6 +1,6 @@
 import config, decimal, discord, aiohttp, utils
 from discord import Embed
-from defs import AdjustedPreferences, bot, db_cursor, logger, OreTiers, TIER_NAME_TO_COLOR_HEX, TIER_NAME_TO_TIER_RANK
+from defs import AdjustedPreferences, bot, db_cursor, DiscordChannel, logger, OreTiers, TierNames, TIER_NAME_TO_COLOR_HEX, TIER_NAME_TO_TIER_RANK
 
 async def report_permission_warning(guild: discord.Guild, is_global_channel: bool) -> None:
     if guild.owner is None:
@@ -16,7 +16,7 @@ async def report_permission_warning(guild: discord.Guild, is_global_channel: boo
     logger.debug(f"Sent a permission warning to server {guild.name} (Guild ID: {guild.id})")
 
 # Helper function
-async def attempt_to_send_to_channel(channel: discord.TextChannel, content: str = None, embed: discord.Embed = None, is_global_channel: bool = False) -> None:
+async def attempt_to_send_to_channel(channel: DiscordChannel, content: str | None = None, embed: discord.Embed | None = None, is_global_channel: bool = False) -> None:
     if not channel.can_send(embed):
         await report_permission_warning(guild=channel.guild, is_global_channel=is_global_channel)
         return
@@ -32,16 +32,16 @@ def create_embed(
     ore_name: str,
     ore_rarity: int,  # base rarity, not adjusted
     cave_type: str | None,
-    ore_tier: str,  # the tier that appears on the track
+    ore_tier: TierNames | str,  # the tier that appears on the track
     ore_type: str,  # normal, ionized, spectral
     event: str,
-    world: str,
+    world: str | None,
     # user data
     username: str,
     loadout: str,
     blocks_mined: int,
     # misc
-    guild_id: int = None,
+    guild_id: int | None = None,
     manual_tracked: bool = False
 ) -> Embed | None:
     # stax; fix up ore rarity for stuff like nebulova event, or zanarchium being 0 rarity on tracker
@@ -51,10 +51,11 @@ def create_embed(
     embed: discord.Embed = discord.Embed(color=TIER_NAME_TO_COLOR_HEX.get(ore_tier, 0))
     embed.title = f"**{username}** has found {"a spectral " if ore_type == "SPECTRAL" else "an ionized " if ore_type == "IONIZED" else ""}**{ore_name}**{f' (*{cave_type}*)' if cave_type else ''}"
 
-    if manual_tracked:
-        embed.description = f"[Manual Tracked]\n{world}"
-    else:
-        embed.description = world
+    if world is not None:
+        if manual_tracked:
+            embed.description = f"[Manual Tracked]\n{world}"
+        else:
+            embed.description = world
 
     if cave_type:
         embed.add_field(name="Rarity", value=f"1/{base_rarity:,} in {cave_type}s", inline=True)
@@ -99,10 +100,10 @@ async def send_data(
     ore_name: str,
     ore_rarity: int,  # base rarity, not adjusted
     cave_type: str | None,
-    ore_tier: str,  # the tier that appears on the track
+    ore_tier: TierNames | None,  # the tier that appears on the track
     ore_type: str,  # normal, ionized, spectral
     event: str,
-    world: str,
+    world: str | None,
     # user data
     username: str,
     loadout: str,
@@ -139,17 +140,17 @@ async def send_data(
         # stax; use lower() so that people dont have to put exact users. roblox doesnt allow names with different cases but same letters anyways
         # this checks if the username is tracked in this server.
         if username.lower() in [player.lower() for player in players]:
-            tracker_channel: discord.TextChannel | None = bot.get_channel(tracker_channel_id)
+            tracker_channel: DiscordChannel = bot.get_channel(tracker_channel_id)
             if tracker_channel is None:
                 logger.error(msg=f"[send_data] Couldn't find tracker channel {tracker_channel_id} in guild id {guild_id}!")
                 # TODO: stax; remove the channel from the database if its not found.
                 continue
 
-            embed: discord.Embed = create_embed(ore_name=ore_name, ore_rarity=ore_rarity, cave_type=cave_type,
+            embed: discord.Embed | None = create_embed(ore_name=ore_name, ore_rarity=ore_rarity, cave_type=cave_type,
                                                 ore_tier=ore_tier, ore_type=ore_type, event=event, world=world,
                                                 username=username, loadout=loadout, blocks_mined=blocks_mined,
                                                 guild_id=guild_id, manual_tracked=manual_tracked)
-            if not embed:
+            if embed is None:
                 continue
 
             user_pings: list = db_cursor.execute(
@@ -192,7 +193,7 @@ async def send_data(
                     await attempt_to_send_to_channel(channel=tracker_channel, content=global_message, embed=embed)
 
                 if global_channel_id:
-                    global_channel: discord.TextChannel | None = bot.get_channel(global_channel_id)
+                    global_channel: DiscordChannel = bot.get_channel(global_channel_id)
                     if global_channel is None:
                         logger.error(msg=f"[send_data] Couldn't find global channel {global_channel_id} in guild id {guild_id}!")
                         # TODO: stax; remove the channel from the database if its not found.
@@ -207,7 +208,7 @@ async def send_data(
 
     if not config.DEV_MODE:
         # stax; send to channels it needs to be sent to.
-        embed: discord.Embed = create_embed(ore_name=ore_name, ore_rarity=ore_rarity, cave_type=cave_type,
+        embed: discord.Embed | None = create_embed(ore_name=ore_name, ore_rarity=ore_rarity, cave_type=cave_type,
                                                     ore_tier=ore_tier, ore_type=ore_type, event=event, world=world,
                                                     username=username, loadout=loadout, blocks_mined=blocks_mined,
                                                     guild_id=None, manual_tracked=False)
@@ -217,18 +218,18 @@ async def send_data(
         
         base_rarity: int = utils.get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type,
                                         loadout=loadout, do_adjusted=False, run_nebulova=True)
-        adjusted_rarity = utils.get_ore_rarity(ore_name, base_rarity, ore_type, cave_type, loadout, do_adjusted=True,
-                                        run_nebulova=False) * decimal.Decimal(1.88)
+        adjusted_rarity: int = round(utils.get_ore_rarity(ore_name, base_rarity, ore_type, cave_type, loadout, do_adjusted=True,
+                                        run_nebulova=False) * 1.88)
         if is_global:
-            cat_global_channel: discord.TextChannel = bot.get_channel(1306083504370618470)
+            cat_global_channel: DiscordChannel = bot.get_channel(1306083504370618470)
             if cat_global_channel:
                 await cat_global_channel.send(embed=embed)
-            wdor_global_channel: discord.TextChannel = bot.get_channel(1508240892933443604)
+            wdor_global_channel: DiscordChannel = bot.get_channel(1508240892933443604)
             if wdor_global_channel:
                 await wdor_global_channel.send(embed=embed)
 
         if blocks_mined <= 5000000:
-            cat_beginner_channel: discord.TextChannel = bot.get_channel(1311792395414667304)
+            cat_beginner_channel: DiscordChannel = bot.get_channel(1311792395414667304)
             if cat_beginner_channel and embed:
                 if is_global or base_rarity >= 5_000_000_000:
                     await cat_beginner_channel.send(content="<@&1455083226828902566>", embed=embed)
@@ -247,7 +248,7 @@ async def send_data(
                         await webhook.send(embed=embed)
                     await session.close()
 
-        cat_rare_ore_tracker_channel = bot.get_channel(1407955712209977415)
+        cat_rare_ore_tracker_channel: DiscordChannel = bot.get_channel(1407955712209977415)
         if cat_rare_ore_tracker_channel is not None:
             if cave_type is not None and adjusted_rarity >= 100_000_000_000:
                 await cat_rare_ore_tracker_channel.send("<@&1416256696384487525>", embed=embed)

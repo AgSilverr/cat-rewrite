@@ -17,18 +17,18 @@ def get_ore_attributes(ore_name: str) -> OreAttributes | None:
     ore_name = ore_name.lower()
 
     # allows for mass changing of multipliers
-    common = [110, TierNames.COMMON]
-    uncommon = [100, TierNames.UNCOMMON]
-    rare = [90, TierNames.RARE]
-    master = [80, TierNames.MASTER]
-    surreal = [70, TierNames.SURREAL]
-    mythic = [60, TierNames.MYTHIC]
-    exotic = [50, TierNames.EXOTIC]
-    exquisite = [45, TierNames.EXQUISITE]
-    transcendent = [40, TierNames.TRANSCENDENT]
-    enigmatic = [30, TierNames.ENIGMATIC]
-    unfathomable = [20, TierNames.UNFATHOMABLE]
-    otherworldly = [15, TierNames.OTHERWORLDLY]
+    common: tuple[int, TierNames] = (110, TierNames.COMMON)
+    uncommon: tuple[int, TierNames] = (100, TierNames.UNCOMMON)
+    rare: tuple[int, TierNames] = (90, TierNames.RARE)
+    master: tuple[int, TierNames] = (80, TierNames.MASTER)
+    surreal: tuple[int, TierNames] = (70, TierNames.SURREAL)
+    mythic: tuple[int, TierNames] = (60, TierNames.MYTHIC)
+    exotic: tuple[int, TierNames] = (50, TierNames.EXOTIC)
+    exquisite: tuple[int, TierNames] = (45, TierNames.EXQUISITE)
+    transcendent: tuple[int, TierNames] = (40, TierNames.TRANSCENDENT)
+    enigmatic: tuple[int, TierNames] = (30, TierNames.ENIGMATIC)
+    unfathomable: tuple[int, TierNames] = (20, TierNames.UNFATHOMABLE)
+    otherworldly: tuple[int, TierNames] = (15, TierNames.OTHERWORLDLY)
 
     # format : ion multiplier, tier name, cave type
     cave_exclusives = {
@@ -248,7 +248,7 @@ def get_ore_attributes(ore_name: str) -> OreAttributes | None:
         "beehive": [mythic[0], mythic[1], "Floral Cave"],
     }
 
-    attributes = cave_exclusives.get(ore_name, None)
+    attributes: list[int | str] | None = cave_exclusives.get(ore_name, None)
     if attributes is None:
         return None
 
@@ -261,7 +261,7 @@ def get_ore_attributes(ore_name: str) -> OreAttributes | None:
 
 def get_ore_rarity(
     ore_name: str, base_rarity: int, ore_type: str,
-    cave_type: str | None, loadout: str, do_adjusted: bool,
+    cave_type: str | None, loadout: str | None, do_adjusted: bool,
     run_nebulova: bool
 ) -> int:
     """
@@ -275,26 +275,27 @@ def get_ore_rarity(
 
         if run_nebulova and ore_name in CAVE_ORES["Starry Cave"]["ores"]:
             cave_attributes = get_ore_attributes(ore_name=ore_name)
-            is_cave_exclusive = cave_attributes.is_cave_exclusive
+            if cave_attributes is not None:
+                is_cave_exclusive = cave_attributes.is_cave_exclusive
 
-            if cave_type == "Gilded Cave" and is_cave_exclusive:
-                base_rarity = CAVE_ORES["Starry Cave"]["ores"][ore_name][ORE_TYPE_TO_RANK.get(ore_type)] * 3
-            elif cave_type != "Starry Cave" and cave_type != "Gilded Cave":
-                base_rarity = CAVE_ORES["Starry Cave"]["ores"][ore_name][ORE_TYPE_TO_RANK.get(ore_type)] * 3
+                if cave_type == "Gilded Cave" and is_cave_exclusive:
+                    base_rarity = CAVE_ORES["Starry Cave"]["ores"][ore_name][ORE_TYPE_TO_RANK.get(ore_type)] * 3
+                elif cave_type != "Starry Cave" and cave_type != "Gilded Cave":
+                    base_rarity = CAVE_ORES["Starry Cave"]["ores"][ore_name][ORE_TYPE_TO_RANK.get(ore_type)] * 3
 
-        if loadout is not None and loadout != "":  # prevent IndexError in split
+        if loadout is not None:  # prevent IndexError in split
             salad_57 = True if ("Ambrosia Salad" in loadout or loadout.split(", ")[0] == "57 Leaf Clover") else False
             salad_100 = True if (loadout.split(", ")[0] == "100 Leaf Clover") else False
         else:
             salad_57 = False
             salad_100 = False
 
-        adjusted = base_rarity * (
+        adjusted: int = base_rarity * (
             CAVE_ORES[cave_type]['rarity'] if cave_type != "Gilded Cave" else 57 if salad_57 else 100 if salad_100 else 5700)
 
-        is_floor_exclusive = ore_name == "Empress of Light" or ore_name == "Aurora Polaris" or ore_name == "Solemn Lamentine" or ore_name == "Bungy"
+        is_floor_exclusive: bool = ore_name == "Empress of Light" or ore_name == "Aurora Polaris" or ore_name == "Solemn Lamentine" or ore_name == "Bungy"
         if is_floor_exclusive:
-            adjusted *= decimal.Decimal(3.5846)
+            adjusted *= 3.5846
 
         return round(adjusted)
     else:
@@ -339,9 +340,9 @@ def get_permission_level(user_id: int) -> PermissionLevel:
     if member is None:
         return permission_level
     
-    whitelist_role: discord.Role = discord.utils.get(iterable=bot_guild.roles, id=1195956111099052032)
-    whitelist_plus_role: discord.Role = discord.utils.get(iterable=bot_guild.roles, id=1328207797321601046)
-    if whitelist_role and whitelist_plus_role:
+    whitelist_role: discord.Role | None = discord.utils.get(iterable=bot_guild.roles, id=1195956111099052032)
+    whitelist_plus_role: discord.Role | None = discord.utils.get(iterable=bot_guild.roles, id=1328207797321601046)
+    if whitelist_role is not None and whitelist_plus_role is not None:
         if whitelist_plus_role in member.roles:
             permission_level = PermissionLevel.OWNER
         elif whitelist_role in member.roles:
@@ -359,29 +360,26 @@ def get_nth_word(string: str, n: int, delim: str | None = None) -> str | None:
         return words[n-1]
     return None
 
-def find_closest_names(ore_name: str) -> str | None:
+def find_closest_names(ore_name: str) -> list[str] | str | None:
     ore_name = ore_name.lower()
     symbol_ores_list: tuple[str] = ('sigma', 'pi', 'omega', 'lunar omega', 'delta', 'psi', 'infinictrite', 'noopa', 'noo p a')
-    number_ores_list: tuple[str] = ['combustion system', 'trojan']
+    number_ores_list: tuple[str] = ('combustion system', 'trojan')
     if ore_name in symbol_ores_list:
         return ('Σ', 'π', 'Ω', 'Lunar Ω', 'Δ', 'ψ', '∞', 'NOO P α', 'NOO P α')[symbol_ores_list.index(ore_name)]
     elif ore_name in number_ores_list:
         return ('@Combust10n_+_Syst3m', 'TR0J4N')[number_ores_list.index(ore_name)]
 
-    name_list: dict | None = ALL_ORES.get('Ores', None)
+    name_list: dict[str, int] | None = ALL_ORES.get('Ores', None)
     if name_list is None:
-        raise ValueError
+        raise RuntimeError
     
-    name_list_lower: dict = { n.lower(): n for n in name_list }
+    name_list_lower: dict[str, str] = { name.lower(): name for name in name_list }
     matches = difflib.get_close_matches(ore_name, name_list_lower.keys(), 25)
 
     if len(matches) == 0:
         return None
 
-    names_list = []
-    for match in matches:
-        names_list.append(name_list_lower[match])
-    return names_list
+    return [name_list_lower[match] for match in matches]
 
 def ore_name_autocomplete(ctx: discord.AutocompleteContext) -> list[str]:
     if not ctx.value: return ["Enter an ore name!"]
@@ -394,7 +392,7 @@ def cave_type_autocomplete(ctx: discord.AutocompleteContext) -> list[str]:
     if not ctx.value: return ["Enter a cave type!"]
     return [c for c in CAVE_ORES.keys() if ctx.value.lower() in c.lower()][:5]
 
-def get_global_role_ping(ore_name: str, ore_rarity: float, ore_rank: OreTiers, ore_type: str, cave_type: str) -> str:
+def get_global_role_ping(ore_name: str, ore_rarity: int, ore_rank: OreTiers, ore_type: str, cave_type: str) -> str:
     # This sucks! but oh well.
     event_rarities: dict[str, int] = {
         "idolium": 140_000_000,
@@ -422,7 +420,7 @@ def get_global_role_ping(ore_name: str, ore_rarity: float, ore_rank: OreTiers, o
 
     base_ore_rarity: int = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=False, run_nebulova=False)
     adjusted_ore_rarity: int = get_ore_rarity(ore_name=ore_name, base_rarity=ore_rarity, ore_type=ore_type, cave_type=cave_type, loadout=None, do_adjusted=True, run_nebulova=True)
-    adjusted_ore_rarity = round(decimal.Decimal(adjusted_ore_rarity) * decimal.Decimal(1.88))
+    adjusted_ore_rarity = round(adjusted_ore_rarity * 1.88)
 
     event_ore_rarity: int = event_rarities.get(ore_name, base_ore_rarity)
     if ore_type != "NORMAL":
