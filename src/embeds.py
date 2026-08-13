@@ -140,7 +140,7 @@ async def send_data(
         # stax; use lower() so that people dont have to put exact users. roblox doesnt allow names with different cases but same letters anyways
         # this checks if the username is tracked in this server.
         if username.lower() in [player.lower() for player in players]:
-            tracker_channel: DiscordChannel = bot.get_channel(tracker_channel_id)
+            tracker_channel: DiscordChannel = bot.get_or_fetch(object_type=discord.TextChannel, object_id=tracker_channel_id)
             if tracker_channel is None:
                 logger.error(msg=f"[send_data] Couldn't find tracker channel {tracker_channel_id} in guild id {guild_id}!")
                 # TODO: stax; remove the channel from the database if its not found.
@@ -192,8 +192,8 @@ async def send_data(
                 else:
                     await attempt_to_send_to_channel(channel=tracker_channel, content=global_message, embed=embed)
 
-                if global_channel_id:
-                    global_channel: DiscordChannel = bot.get_channel(global_channel_id)
+                if global_channel_id is not None:
+                    global_channel: DiscordChannel = bot.get_or_fetch(object_type=discord.TextChannel, object_id=global_channel_id)
                     if global_channel is None:
                         logger.error(msg=f"[send_data] Couldn't find global channel {global_channel_id} in guild id {guild_id}!")
                         # TODO: stax; remove the channel from the database if its not found.
@@ -221,15 +221,15 @@ async def send_data(
         adjusted_rarity: int = round(utils.get_ore_rarity(ore_name, base_rarity, ore_type, cave_type, loadout, do_adjusted=True,
                                         run_nebulova=False) * 1.88)
         if is_global:
-            cat_global_channel: DiscordChannel = bot.get_channel(1306083504370618470)
+            cat_global_channel: DiscordChannel = bot.get_or_fetch(object_type=discord.TextChannel, object_id=1306083504370618470)
             if cat_global_channel:
                 await cat_global_channel.send(embed=embed)
-            wdor_global_channel: DiscordChannel = bot.get_channel(1508240892933443604)
+            wdor_global_channel: DiscordChannel = bot.get_channel(object_type=discord.TextChannel, object_id=1508240892933443604)
             if wdor_global_channel:
                 await wdor_global_channel.send(embed=embed)
 
         if blocks_mined <= 5000000:
-            cat_beginner_channel: DiscordChannel = bot.get_channel(1311792395414667304)
+            cat_beginner_channel: DiscordChannel = bot.get_channel(object_type=discord.TextChannel, object_id=1311792395414667304)
             if cat_beginner_channel and embed:
                 if is_global or base_rarity >= 5_000_000_000:
                     await cat_beginner_channel.send(content="<@&1455083226828902566>", embed=embed)
@@ -246,9 +246,8 @@ async def send_data(
                         await webhook.send("<@&1326276408087023638>", embed=embed)
                     else:
                         await webhook.send(embed=embed)
-                    await session.close()
 
-        cat_rare_ore_tracker_channel: DiscordChannel = bot.get_channel(1407955712209977415)
+        cat_rare_ore_tracker_channel: DiscordChannel = bot.get_or_fetch(object_type=discord.TextChannel, object_id=1407955712209977415)
         if cat_rare_ore_tracker_channel is not None:
             if cave_type is not None and adjusted_rarity >= 100_000_000_000:
                 await cat_rare_ore_tracker_channel.send("<@&1416256696384487525>", embed=embed)

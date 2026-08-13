@@ -66,7 +66,7 @@ class MainCommands(commands.Cog):
 
         tracker_channel_id: list | int = db_cursor.execute(
             "SELECT tracker_channel_id FROM ChannelsPerGuild WHERE guild_id = ?", (ctx.guild_id,)).fetchone()
-        if not tracker_channel_id:
+        if tracker_channel_id is not None and len(tracker_channel_id) != 0:
             tracker_channel_id = tracker_channel_id[0]
             if channel.id == tracker_channel_id:
                 await ctx.respond(content="You cannot set the global channel to same channel as the tracker channel")
